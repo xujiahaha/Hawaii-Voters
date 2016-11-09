@@ -1,0 +1,325 @@
+<!-- <?php include('_global.php'); ?> -->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Midterm-Jia Xu</title>
+  
+  
+  <!-- jQuery -->
+  <script src="http://code.jquery.com/jquery-3.1.1.js"></script>
+  <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+  
+  <!-- Latest compiled and minified CSS -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+
+  <!-- Optional theme -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css">
+
+  <!-- Latest compiled and minified JavaScript -->
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
+  
+  
+  <script src="http://www.w3schools.com/lib/w3data.js"></script>
+
+  
+
+</head>
+<body onload="getVoters()">
+<!-- navbar -->
+<div w3-include-html="navbar.html"></div> 
+<script>
+	w3IncludeHTML();
+</script>
+
+
+<!-- main page -->
+<div class="container-fluid">
+<div class="row">
+	<!-- side bar -->
+	<div class="col-md-2 col-sm-2 selectContainer">
+        <div class="panel panel-default">
+	        <a class="list-group-item" data-toggle="collapse" href="#options">Street Walk List &nbsp; &nbsp;<span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></a>
+			<div class="panel-collapse collapse" id="options">
+				<div class="panel-body">
+					<a href="#all" class="list-group-item active" id="all">All</a>
+					<a href="#odd" class="list-group-item" id="odd" >Odd</a>
+					<a href="#even" class="list-group-item" id="even" >Even</a>
+				
+				</div>
+			</div>
+		</div> <!-- close list options -->
+
+		<a class="list-group-item" data-toggle="collapse" href="#filter-panel">Search Form &nbsp; &nbsp;<span class="glyphicon glyphicon-menu-down" aria-hidden="true"></span></a>
+		<div id="filter-panel" class="collapse filter-panel">
+			<div class="panel panel-default">
+			<div class="panel-body">
+				<form action="search_results.php" role="form" method="post">
+					<div class="form-group">
+                        <label class="filter-col" style="margin-right:0;" for="pref-search">Search:</label>
+                        <input type="text" class="form-control input-sm" id="pref-search" placeholder="Input Name" name="Name">
+                     </div>
+                     <div class="form-group">    
+                            <div class="checkbox" style="margin-left:10px; margin-right:10px;">
+                                <label><input type="checkbox" name="PFTV" value="V"> Voted in the Primary</label>
+                            </div>
+                            <div class="checkbox" style="margin-left:10px; margin-right:10px;">
+                                <label><input type="checkbox" name="Perm_ABS" value="P"> Permanent Absentee</label>
+                            </div>
+                            <button type="submit" class="btn btn-primary filter-col" value="SEARCH">
+                                <span class="glyphicon glyphicon-search"></span> Search
+                            </button>  
+                        </div>
+				</form>	
+			</div>
+			</div>
+		</div>  <!-- close search form -->
+	</div> <!-- close side bar -->
+		
+		
+
+
+
+
+	<!-- table content -->
+	<div class="col-md-10 col-sm-10">
+		<div id="id_numRecords" style="font-size: 14pt; color:#CC0000"></div>
+		<div id="id_listTable"></div>
+		 
+		
+		<div class="modal fade" id="updateModal" tabindex="-1" role="dialog" aria-labelledby="updateModalLabel" aria-hidden="true">
+			<div class="modal-dialog" role="document">
+				<div class="modal-content">
+					<div class="modal-header">
+						<button type="button" class="close" data-dismiss="modal" aria-label="Close">
+							<span aria-hidden="true">&times;</span>
+          				</button>
+          				<h4 class="modal-title updateModalLabel"></h4><span class='modal-title voterID' hidden></span>
+          				
+        			</div>
+        			<div class="modal-body">
+        			<div style="color:blue" id="id_message"></div>
+        			<form>
+			            <div class="form-group">
+			              <label for="contact" class="form-control-label">Contact:</label>
+			              <select class="form-control" id="contact">
+			                  <option value='-5'>-5</option>
+    					  <option value='-4'>-4</option>
+    					  <option value='-3'>-3</option>
+         				  <option value='-2'>-2</option>
+         				  <option value='-1'>-1</option>
+    					  <option value='0' selected>0</option>
+    					  <option value='1'>1</option>
+    					  <option value='2'>2</option>
+    					  <option value='3'>3</option>
+         				  <option value='4'>4</option>
+    					  <option value='5'>5</option>
+			              </select>
+			            </div>
+			            <div class="form-group">
+			              <label for="comments" class="form-control-label">Comments:</label>
+			              <textarea class="form-control" id="comments"></textarea>
+			            </div>
+			          </form>
+			          </div>
+		        	<div class="modal-footer">
+		          		<button type="button" class="btn btn-secondary" data-dismiss="modal" id='closeModal'>Close</button>
+		          		<button type="button" class="btn btn-primary" onclick="updateVoter()">Update</button>
+		        	</div>
+		      </div>
+		    </div>
+		</div> <!-- close modal -->
+	</div> <!-- close table content -->
+	
+</div>
+</div>
+
+
+
+
+<!-- All Scripts are here -->
+<script>
+		
+			
+	$(function(){
+    		console.log('ready');
+
+    		$('.panel-body a').click(function(e) {
+        		e.preventDefault();
+
+        		$selectedItem = $(this);
+
+        		$selectedItem.parent().find('a').removeClass('active');
+        		$selectedItem.addClass('active');
+        		getVoters();
+    		});
+    		
+    		
+
+	})
+
+
+	function getVoters() {
+		var ajaxRequest;
+
+		// Code for AXAX request on different browsers
+		try{ajaxRequest = new XMLHttpRequest();}
+		catch (e)
+		{
+			try{ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");}
+
+			catch (e)
+			{
+				try{ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");}
+
+				catch (e){alert("Your browser does not support ajax."); return false;}
+			}
+		};
+
+		// Wait for readyState == 4
+
+		ajaxRequest.onreadystatechange = function(){
+
+			if(ajaxRequest.readyState == 4){
+
+				var jsonReturn=ajaxRequest.responseText;
+
+				var obj = JSON.parse(jsonReturn);
+
+				document.getElementById('id_numRecords').innerHTML= obj.votings.length + ' Records';
+
+				var listTable='<table class="table table_striped" border=1 cellspacing=0 cellpadding=5><tr>';
+				listTable += '<th>Name</th>';
+				listTable += '<th>HouseNum</th>';
+				listTable += '<th>City</th>';
+				listTable += '<th>Zip</th>';
+				listTable += '<th>Status</th>';
+				listTable += '<th>PFTV</th>';
+				listTable += '<th>GFTV</th>';
+				listTable += '<th>PERM_ABS</th>';
+				listTable += '<th>Contact</th>';
+				listTable += '<th>Comments</th></tr>';
+
+				for(var i = 0; i < obj.votings.length; i++)
+				{
+					
+					var obj2 = obj.votings[i];
+
+					listTable+='<tr><td><a href="" data-toggle="modal" data-target="#updateModal" class="myClass" onclick="updateVoterForm(\'' + obj2.VID + '\')">'+obj2.Name+'</a></td>';
+					listTable+='<td>'+obj2.HouseNum+'</td>';
+					listTable+='<td>'+obj2.City+'</td>';
+					listTable+='<td>'+obj2.Zip+'</td>';
+					listTable+='<td>'+obj2.Status+'</td>';
+					listTable+='<td>'+obj2.PFTV+'</td>';
+					listTable+='<td>'+obj2.GFTV+'</td>';
+					listTable+='<td>'+obj2.PERM_ABS+'</td>';
+					listTable+='<td>'+obj2.Contact+'</td>';
+					listTable+='<td>'+obj2.Comments+'</td></tr>';
+					
+				}
+				listTable += '</table>';
+
+				document.getElementById('id_listTable').innerHTML=listTable;
+				
+				
+				for(var i = 0; i < obj.votings.length; i++){
+					document.getElementsByClassName('myClass')[i].setAttribute("data-comments", obj.votings[i].Comments);
+					document.getElementsByClassName('myClass')[i].setAttribute("data-contact", obj.votings[i].Contact);
+					document.getElementsByClassName('myClass')[i].setAttribute("data-name", obj.votings[i].Name);
+					document.getElementsByClassName('myClass')[i].setAttribute("data-id", obj.votings[i].VID);
+				}
+
+			};
+		};
+		
+		var option = $(".active").attr("id");
+
+		var url="list_voters_api.php?";
+		url += "option="+option;
+		//if(confirm(url))
+		//{
+			ajaxRequest.open("GET", url, true);
+
+			ajaxRequest.send(null);
+		//}
+
+	};
+	
+	function updateVoterForm() {
+		$('#updateModal').on('show.bs.modal', function (event) {
+  			var selectedItem = $(event.relatedTarget); // Button that triggered the modal 
+  			var name = selectedItem.data('name'); // Extract info from data-* attributes
+  			var comments = selectedItem.data('comments');
+  			var contact = selectedItem.data('contact');
+  			var id = selectedItem.data('id');
+  			var modal = $(this);
+  			modal.find('h4.modal-title').text('Update Contact and Comments of ' + name); 
+  			modal.find('span.modal-title').text(id);
+  			modal.find('.modal-body textarea').val(comments);
+  			
+		});
+	};
+	
+	function updateVoter(){
+		
+		var ajaxRequest;
+
+		// Code for AXAX request on different browsers
+		try{ajaxRequest = new XMLHttpRequest();}
+		catch (e)
+		{
+			try{ajaxRequest = new ActiveXObject("Msxml2.XMLHTTP");}
+
+			catch (e)
+			{
+				try{ajaxRequest = new ActiveXObject("Microsoft.XMLHTTP");}
+
+				catch (e){alert("Your browser does not support ajax."); return false;}
+			}
+		};
+
+		// Wait for readyState == 4
+
+		ajaxRequest.onreadystatechange = function(){
+
+			if(ajaxRequest.readyState == 4){
+
+				var jsonReturn=ajaxRequest.responseText;
+
+				var obj = JSON.parse(jsonReturn);
+
+				document.getElementById('id_message').innerHTML=obj.message;
+				
+				if(obj.status==1){
+					$('#updateModal').on('hidden.bs.modal', function () {
+   						 window.location.reload(true);
+					})
+				}
+			};
+		};
+		
+		var vid = document.getElementsByClassName('voterID')[0].innerHTML;
+		var contact = document.getElementById('contact').value;
+		var comments = document.getElementById('comments').value;
+		//var contact = $("#contact option:selected").val();
+		//var comments = $('textarea#comments').val();
+		
+		var url="update_voter_api.php?";
+		url += "VID="+vid+"&Contact="+contact+"&Comments="+comments;
+		//if(confirm(url))
+		//{
+			ajaxRequest.open("GET", url, true);
+
+			ajaxRequest.send(null);
+		//}
+
+		
+
+	};
+
+
+
+</script>
+
+</body>
+</html>
