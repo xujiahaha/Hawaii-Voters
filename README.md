@@ -1,4 +1,4 @@
-# List-Update-data
+# Hawaii-Voters
 This is for ICS415 midterm exam. Listing/Updating is realized using JavaScript. APIs (in PHP) are accessed using AJAX.
 ## Realized functions:
 1. List all data in database.
