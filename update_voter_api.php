@@ -11,6 +11,8 @@
 	
 	$status=0;
 	$message="";
+	$comment_status=0;
+	$datetime = date('Y-m-d H:i:s');
 	
 	if($sqlRecord = mysql_fetch_assoc($sqlTable))
 	{		
@@ -26,6 +28,7 @@
 		{
 			$message .= ", Comments changed to $Comments";
 			$set .= ", Comments='$Comments'";
+			$comment_status=1;
 		}
 
 		if($set>'')
@@ -49,7 +52,8 @@
 	$json = json_encode([
 		"datetime" => $datetime,
 		"message" => $message,
-		"status" => $status
+		"status" => $status,
+		"comment_status" => $comment_status
 
 	]);
 	echo $json;

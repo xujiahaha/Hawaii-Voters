@@ -3,39 +3,37 @@
 	$Name=$_REQUEST['Name'];
 	$Perm_ABS=$_REQUEST['Perm_ABS'];
 	$PFTV=$_REQUEST['PFTV'];
-	$sql="SELECT Name, PFTV, PERM_ABS, MailAddress, MailCity, MailState, MailZip FROM PLUMERIA_ST";
+	$sql="SELECT Name,CONCAT(GROUP_CONCAT(DISTINCT LastName),' Residence') AS Addressee, MailAddress, MailCity, MailState, MailZip FROM PLUMERIA_ST";
 	$where="";
 	if($Name>'') $where .= " AND Name LIKE '%$Name%'";
-	if($Perm_ABS>'') $where .= " AND PERM_ABS='$Perm_ABS'";
-	if($PFTV>'') $where .= " AND PFTV='$PFTV'";
+	if($Perm_ABS>''){
+		if($Perm_ABS == 'Yes'){
+			$where .= " AND PERM_ABS='P'";
+		}else{
+			$where .= " AND PERM_ABS=''";
+		}
+	}
+	if($PFTV>''){
+		if($PFTV == 'Yes'){
+			$where .= " AND (PFTV='V' OR PFTV='A')";
+		}else if($PFTV == 'No'){
+			$where .= " AND (PFTV<>'V' AND PFTV<>'A' AND PFTV<>'')";
+		}else{
+			$where .= " AND PFTV=''";
+		}
+	}
 	if($where>'') $sql .= ' WHERE ' . substr($where,5);
-	$sql .= " ORDER BY Name";
-	
+	$sql .= " GROUP BY MailAddress, MailZip";
 	$sqlTable = mysql_query($sql, $conn) or die("Couldn't perform query $sql (".__LINE__."): " . mysql_error() . '.');
-	$sqlFields = mysql_num_fields($sqlTable);
 
-	$csv_export = '';
-	// create line with field names
-	for($i = 0; $i < $sqlFields; $i++) {
-  		$csv_export.= mysql_field_name($sqlTable,$i).',';
-	}
-	// newline (seems to work both on Linux & Windows servers)
-	$csv_export.= '
-	';
-	
-	// loop through database query and fill export variable
-	while($row = mysql_fetch_array($sqlTable)) {
-  		// create line with field values
-  		for($i = 0; $i < $sqlFields; $i++) {
-    			$csv_export.= $row[mysql_field_name($sqlTable,$i)].',';
-  		}	
-  		$csv_export.= '
-		';	
+	$output = "Name,Address,City,State,Zip\n";
+	while($sqlRecord=mysql_fetch_assoc($sqlTable)){
+		$output.='"'.$sqlRecord['Addressee'].'","'.$sqlRecord['MailAddress'].'","'.$sqlRecord['MailCity'].'","'.$sqlRecord['MailState'].'","'.$sqlRecord['MailZip'].'"'."\n";
 	}
 	
-	header('Content-Type: text/csv; charset=utf-8');
-	header('Content-Disposition: attachment; filename=data.csv');
-	echo $csv_export;
+	header('Content-type: application/csv');
+	header('Content-Disposition: attachment; filename=mail_addresses.csv');
+	echo $output;
 	
 ?>
 
